@@ -24,31 +24,34 @@ const client = new Client({
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-
     if (interaction.isChatInputCommand()) {
+        const targetUser = interaction.options.getUser('name', true);
+        const challenger = interaction.user;
+
         try {
             if (interaction.commandName === 'challenge') {}
-                const targetUser = interaction.options.getUser('name', true);
     
             const acceptButton = new ButtonBuilder()
-                .setCustomId('accept')
+                .setCustomId(`accept-${challenger.id}`)
                 .setLabel('Accept')
                 .setStyle(ButtonStyle.Success)
         
             const rejectButton = new ButtonBuilder()
-                .setCustomId('reject')
+                .setCustomId(`reject-${challenger.id}`)
                 .setLabel('Reject')
                 .setStyle(ButtonStyle.Danger)
         
             const row = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, rejectButton);
         
+            // DM target
             await targetUser.send({
-                content: `You have been challenged by <@${interaction.user.id}>!  Do you accept?`,
+                content: `You have been challenged by <@${challenger.id}>!  Do you accept?`,
                 components: [
                     row,
                 ],
             });
     
+            // Notify challenger in server chat (hidden)
             await interaction.reply({
                 content: `Challenge sent to <@${targetUser.id}> via DM!`,
             });
@@ -61,6 +64,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         }
     }
     else if (interaction.isButton()) {
+        // TODO: Handle button click
         const response = interaction.customId === 'accept' ? 'Challenge accepted!' : 'Challenge rejected.';
 
         await interaction.update({
