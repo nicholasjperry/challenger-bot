@@ -24,44 +24,50 @@ const client = new Client({
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-    if (interaction.type !== InteractionType.ApplicationCommand) return;
 
-    if (!interaction.isChatInputCommand()) return;
+    if (interaction.isChatInputCommand()) {
+        try {
+            if (interaction.commandName === 'challenge') {}
+                const targetUser = interaction.options.getUser('name', true);
     
-    try {
-        if (interaction.commandName === 'challenge') {}
-            const targetUser = interaction.options.getUser('name', true);
+            const acceptButton = new ButtonBuilder()
+                .setCustomId('accept')
+                .setLabel('Accept')
+                .setStyle(ButtonStyle.Success)
+        
+            const rejectButton = new ButtonBuilder()
+                .setCustomId('reject')
+                .setLabel('Reject')
+                .setStyle(ButtonStyle.Danger)
+        
+            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, rejectButton);
+        
+            await targetUser.send({
+                content: `You have been challenged by <@${interaction.user.id}>!  Do you accept?`,
+                components: [
+                    row,
+                ],
+            });
+    
+            await interaction.reply({
+                content: `Challenge sent to <@${targetUser.id}> via DM!`,
+            });
+        }
+        catch (err) {
+            console.error('Failed to send DM:', err);
+            await interaction.reply({
+                content: `Could not send DM.  They might have DMs disabled.`,
+            })
+        }
+    }
+    else if (interaction.isButton()) {
+        const response = interaction.customId === 'accept' ? 'Challenge accepted!' : 'Challenge rejected.';
 
-        const acceptButton = new ButtonBuilder()
-            .setCustomId('accept')
-            .setLabel('Accept')
-            .setStyle(ButtonStyle.Success)
-    
-        const rejectButton = new ButtonBuilder()
-            .setCustomId('reject')
-            .setLabel('Reject')
-            .setStyle(ButtonStyle.Danger)
-    
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, rejectButton);
-    
-        await targetUser.send({
-            content: `You have been challenged by <@${interaction.user.id}>!  Do you accept?`,
-            components: [
-                row,
-            ],
-        });
-
-        await interaction.reply({
-            content: `Challenge sent to <@${targetUser.id}> via DM!`,
+        await interaction.update({
+            content: response,
+            components: [],
         });
     }
-    catch (err) {
-        console.error('Failed to send DM:', err);
-        await interaction.reply({
-            content: `Could not send DM.  They might have DMs disabled.`,
-        })
-    }
-
 });
 
 client.once(Events.ClientReady, () => {
