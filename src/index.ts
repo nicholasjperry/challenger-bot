@@ -3,6 +3,7 @@ import {
     ButtonBuilder,
     ButtonStyle,
     Client,
+    EmbedBuilder,
     Events,
     GatewayIntentBits,
     InteractionType,
@@ -51,10 +52,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 ],
             });
     
-            // Notify challenger in server chat (hidden)
-            await interaction.reply({
-                content: `Challenge sent to <@${targetUser.id}> via DM!`,
-            });
+            // Notify challenger in server chat?
+            // await interaction.reply({
+            //     content: `Challenge sent to <@${targetUser.id}> via DM!`,
+            // });
+
+            return;
         }
         catch (err) {
             console.error('Failed to send DM:', err);
@@ -64,17 +67,48 @@ client.on(Events.InteractionCreate, async (interaction) => {
         }
     }
     else if (interaction.isButton()) {
-        // TODO: Handle button click
-        const response = interaction.customId === 'accept' ? 'Challenge accepted!' : 'Challenge rejected.';
+        const [action, challengerId] = interaction.customId.split('-');
+        const challengerUser = await client.users.fetch(challengerId);
 
-        await interaction.update({
-            content: response,
-            components: [],
-        });
+        if (action === 'accept') {
+            await interaction.update({
+                content: `✅ You accepted the challenge from <@${challengerId}>!`,
+                components: [],
+            });
+
+            // Notify the challenger
+            await challengerUser.send(
+                `🎉 <@${interaction.user.id}> accepted your challenge!`
+            );
+
+            const embed = new EmbedBuilder()
+                .setTitle('🆚 Challenge Accepted!')
+                .setDescription(`<@${interaction.user.id}> accepted a challenge from <@${challengerId}>`)
+                .setColor(0xDC143C)
+                .setTimestamp();
+
+            const guild = client.guilds.cache.get(process.env.GUILD_ID!);
+            const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
+
+            if (logChannel?.isTextBased())
+                await logChannel.send({ embeds: [embed] });
+        }
+
+        if (action === 'reject') {
+            await interaction.update({
+                content: `❌ You rejected the challenge from <@${challengerId}>.`,
+                components: [],
+            });
+    
+            await challengerUser.send(
+                `❌ <@${interaction.user.id}> rejected your challenge.`
+            );
+        }
     }
 });
 
 client.once(Events.ClientReady, () => {
     console.log(`Logged in as ${client.user?.tag}`);
 });
+
 client.login(process.env.TOKEN);
