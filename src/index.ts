@@ -30,34 +30,33 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const challenger = interaction.user;
 
         try {
-            if (interaction.commandName === 'challenge') {}
-    
-            const acceptButton = new ButtonBuilder()
-                .setCustomId(`accept-${challenger.id}`)
-                .setLabel('Accept')
-                .setStyle(ButtonStyle.Success)
+            if (interaction.commandName === 'challenge') {
+                const acceptButton = new ButtonBuilder()
+                    .setCustomId(`accept-${challenger.id}`)
+                    .setLabel('Accept')
+                    .setStyle(ButtonStyle.Success)
+            
+                const rejectButton = new ButtonBuilder()
+                    .setCustomId(`reject-${challenger.id}`)
+                    .setLabel('Reject')
+                    .setStyle(ButtonStyle.Danger)
+            
+                const row = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, rejectButton);
+            
+                // DM target
+                await targetUser.send({
+                    content: `You have been challenged by <@${challenger.id}>!  Do you accept?`,
+                    components: [
+                        row,
+                    ],
+                });
         
-            const rejectButton = new ButtonBuilder()
-                .setCustomId(`reject-${challenger.id}`)
-                .setLabel('Reject')
-                .setStyle(ButtonStyle.Danger)
-        
-            const row = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, rejectButton);
-        
-            // DM target
-            await targetUser.send({
-                content: `You have been challenged by <@${challenger.id}>!  Do you accept?`,
-                components: [
-                    row,
-                ],
-            });
-    
-            // Notify challenger in server chat?
-            // await interaction.reply({
-            //     content: `Challenge sent to <@${targetUser.id}> via DM!`,
-            // });
-
-            return;
+                // Notify challenger in server chat
+                await interaction.reply({
+                    content: `Challenge sent to <@${targetUser.id}> via DM!`,
+                    ephemeral: true,
+                });
+            }
         }
         catch (err) {
             console.error('Failed to send DM:', err);
@@ -82,8 +81,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
             );
 
             const embed = new EmbedBuilder()
-                .setTitle('🆚 Challenge Accepted!')
-                .setDescription(`<@${interaction.user.id}> accepted a challenge from <@${challengerId}>`)
+                .setTitle('✅ Challenge Accepted!')
+                .setDescription(`<@${interaction.user.id}> 🆚 <@${challengerId}>`)
                 .setColor(0xDC143C)
                 .setTimestamp();
 
