@@ -30,6 +30,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         try {
             if (interaction.commandName === 'challenge') {
                 // Check #channel-log message count
+                // TODO: Check it upon 'Accept' or 'Reject' as well  
                 const guild = client.guilds.cache.get(process.env.GUILD_ID!);
                 const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
                 
