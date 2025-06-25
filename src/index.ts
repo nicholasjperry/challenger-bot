@@ -6,6 +6,7 @@ import {
     EmbedBuilder,
     Events,
     GatewayIntentBits,
+    Guild,
     InteractionType,
     Partials,
 } from 'discord.js';
@@ -26,11 +27,28 @@ const client = new Client({
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isChatInputCommand()) {
-        const targetUser = interaction.options.getUser('name', true);
-        const challenger = interaction.user;
-
         try {
             if (interaction.commandName === 'challenge') {
+                // Check #channel-log message count
+                const guild = client.guilds.cache.get(process.env.GUILD_ID!);
+                const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
+                
+                if (!logChannel?.isTextBased()) return;
+
+                const messages = await logChannel.messages.fetch({ limit: 100 });
+
+                if (messages.map(m => m).length >= 5) {
+                    await interaction.reply({
+                        content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
+                        ephemeral: true,
+                    });
+
+                    return;
+                }
+
+                const targetUser = interaction.options.getUser('name', true);
+                const challenger = interaction.user;
+
                 const acceptButton = new ButtonBuilder()
                     .setCustomId(`accept-${challenger.id}`)
                     .setLabel('Accept')
