@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "rimraf ./build && tsc",
-    "commands": "node --loader ts-node/esm src/commands.ts",
+    "commands": "node --loader ts-node/esm src/deploy-commands.ts",
     "dev": "nodemon --loader ts-node/esm src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

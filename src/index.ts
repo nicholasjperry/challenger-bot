@@ -1,17 +1,16 @@
 import { 
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
     Client,
+    Collection,
     EmbedBuilder,
     Events,
     GatewayIntentBits,
-    Guild,
-    InteractionType,
     Partials,
 } from 'discord.js';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 dotenv.config();
 
@@ -24,65 +23,34 @@ const client = new Client({
     partials: [
         Partials.Channel,
     ],
-});
+}) as Client & { commands: Collection<string, any>};
+
+client.commands = new Collection();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
+
+for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = await import(`file://${filePath}`);
+    if ('data' in command && 'execute' in command)
+        client.commands.set(command.data.name, command);
+}
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isChatInputCommand()) {
+        const command = client.commands.get(interaction.commandName);
+        if (!command) return;
+
         try {
-            if (interaction.commandName === 'challenge') {
-                // Check #channel-log message count
-                // TODO: Check it upon 'Accept' or 'Reject' as well  
-                const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-                const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
-                
-                if (!logChannel?.isTextBased()) return;
-
-                const messages = await logChannel.messages.fetch({ limit: 100 });
-
-                if (messages.map(m => m).length >= 5) {
-                    await interaction.reply({
-                        content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
-                        ephemeral: true,
-                    });
-
-                    return;
-                }
-
-                const targetUser = interaction.options.getUser('name', true);
-                const challenger = interaction.user;
-
-                const acceptButton = new ButtonBuilder()
-                    .setCustomId(`accept-${challenger.id}`)
-                    .setLabel('Accept')
-                    .setStyle(ButtonStyle.Success)
-            
-                const rejectButton = new ButtonBuilder()
-                    .setCustomId(`reject-${challenger.id}`)
-                    .setLabel('Reject')
-                    .setStyle(ButtonStyle.Danger)
-            
-                const row = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, rejectButton);
-            
-                // DM target
-                await targetUser.send({
-                    content: `You have been challenged by <@${challenger.id}>!  Do you accept?`,
-                    components: [
-                        row,
-                    ],
-                });
-        
-                // Notify challenger in server chat
-                await interaction.reply({
-                    content: `Challenge sent to <@${targetUser.id}> via DM!`,
-                    ephemeral: true,
-                });
-            }
+            await command.execute(interaction, client);
         }
         catch (err) {
-            console.error('Failed to send DM:', err);
-            await interaction.reply({
-                content: `Could not send DM.  They might have DMs disabled.`,
-            });
+            console.error(err);
+            if (!interaction.replied)
+                await interaction.reply({ content: 'There was an error.', ephemeral: true });
         }
     }
     else if (interaction.isButton()) {
@@ -91,19 +59,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         if (action === 'accept') {
             await interaction.update({
-                content: `✅ You accepted the challenge from <@${challengerId}>!`,
+                content: `✅ You accepted the challenge from <@${challengerUser.id}>!`,
                 components: [],
             });
 
             // Notify the challenger
-            await challengerUser.send(
-                `🎉 <@${interaction.user.id}> accepted your challenge!`
-            );
+            await challengerUser.send(`🎉 <@${interaction.user.id}> accepted your challenge!`);
 
             const embed = new EmbedBuilder()
                 .setTitle('✅ Challenge Accepted!')
                 .setDescription(`<@${interaction.user.id}> 🆚 <@${challengerId}>`)
-                .setColor(0xDC143C)
+                .setColor(0x00ff00)
                 .setTimestamp();
 
             const guild = client.guilds.cache.get(process.env.GUILD_ID!);
@@ -119,9 +85,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 components: [],
             });
     
-            await challengerUser.send(
-                `❌ <@${interaction.user.id}> rejected your challenge.`
-            );
+            await challengerUser.send(`❌ <@${interaction.user.id}> rejected your challenge.`);
         }
     }
 });
