@@ -15,6 +15,7 @@ const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(fil
 
 for (const file of commandFiles) {
   const command = await import(pathToFileURL(path.join(__dirname, 'commands', file)).href);
+  
   if (command?.data && typeof command.data.name === 'string')
     commands.push(command.data.toJSON());
   else
