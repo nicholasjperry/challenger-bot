@@ -74,7 +74,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
             const guild = client.guilds.cache.get(process.env.GUILD_ID!);
             const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
-
+            
             if (logChannel?.isTextBased())
                 await logChannel.send({ embeds: [embed] });
         }

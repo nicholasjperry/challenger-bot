@@ -28,6 +28,8 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
 
         const messages = await logChannel.messages.fetch({ limit: 100 });
 
+        // TODO: prevent being able to send out challenge to the same person
+
         if (messages.map(m => m).length >= 5) {
             await interaction.reply({
                 content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
