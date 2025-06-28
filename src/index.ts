@@ -11,6 +11,10 @@ import cron from 'node-cron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+    activeChallenges,
+    getChallengeKey,
+} from './commands/challenge.js';
 
 dotenv.config();
 
@@ -57,7 +61,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const [action, challengerId] = interaction.customId.split('-');
         const challengerUser = await client.users.fetch(challengerId);
 
+        const challengeKey = getChallengeKey(interaction.user.id, challengerUser.id);
+        
         if (action === 'accept') {
+            activeChallenges.delete(challengeKey);
+
             await interaction.update({
                 content: `✅ You accepted the challenge from <@${challengerUser.id}>!`,
                 components: [],
@@ -80,6 +88,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         }
 
         if (action === 'reject') {
+            activeChallenges.delete(challengeKey);
+
             await interaction.update({
                 content: `❌ You rejected the challenge from <@${challengerId}>.`,
                 components: [],

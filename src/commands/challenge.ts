@@ -7,6 +7,12 @@ import {
   Client,
 } from 'discord.js';
 
+export const activeChallenges = new Set<string>();
+
+export function getChallengeKey(targetUserId: string, challengerUserId: string) {
+    return [targetUserId, challengerUserId].sort().join(':');
+}
+
 export const data = new SlashCommandBuilder()
     .setName('challenge')
     .setDescription('Challenge another Planeswalker')
@@ -28,9 +34,7 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
 
         const messages = await logChannel.messages.fetch({ limit: 100 });
 
-        // TODO: prevent being able to send out challenge to the same person
-
-        if (messages.map(m => m).length >= 5) {
+        if (messages.size >= 5) {
             await interaction.reply({
                 content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
                 ephemeral: true,
@@ -41,6 +45,16 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
 
         const targetUser = interaction.options.getUser('name', true);
         const challenger = interaction.user;
+
+        const challengeKey = getChallengeKey(targetUser.id, challenger.id);
+
+        if (activeChallenges.has(challengeKey))
+            return interaction.reply({
+                content: 'There is already an active challenge between you two!',
+                ephemeral: true,
+            });
+        else
+            activeChallenges.add(challengeKey);
 
         const acceptButton = new ButtonBuilder()
             .setCustomId(`accept-${challenger.id}`)
