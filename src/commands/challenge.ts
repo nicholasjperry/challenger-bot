@@ -44,9 +44,9 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
         }
 
         const targetUser = interaction.options.getUser('name', true);
-        const challenger = interaction.user;
+        const challengerUser = interaction.user;
 
-        const challengeKey = getChallengeKey(targetUser.id, challenger.id);
+        const challengeKey = getChallengeKey(targetUser.id, challengerUser.id);
 
         if (activeChallenges.has(challengeKey))
             return interaction.reply({
@@ -57,12 +57,12 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
             activeChallenges.add(challengeKey);
 
         const acceptButton = new ButtonBuilder()
-            .setCustomId(`accept-${challenger.id}`)
+            .setCustomId(`accept-${challengerUser.id}`)
             .setLabel('Accept')
             .setStyle(ButtonStyle.Success)
     
         const rejectButton = new ButtonBuilder()
-            .setCustomId(`reject-${challenger.id}`)
+            .setCustomId(`reject-${challengerUser.id}`)
             .setLabel('Reject')
             .setStyle(ButtonStyle.Danger)
     
@@ -70,7 +70,7 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
     
         // DM target
         await targetUser.send({
-            content: `You have been challenged by <@${challenger.id}>!  Do you accept?`,
+            content: `You have been challenged by <@${challengerUser.id}>!  Do you accept?`,
             components: [
                 row,
             ],
