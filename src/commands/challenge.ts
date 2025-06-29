@@ -13,6 +13,30 @@ export function getChallengeKey(targetUserId: string, challengerUserId: string) 
     return [targetUserId, challengerUserId].sort().join(':');
 }
 
+export function getLogChannel (client: Client) {
+    const guild = client.guilds.cache.get(process.env.GUILD_ID!);
+    const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
+
+    return logChannel;
+}
+
+export async function checkMaxMessages(interaction: any, client: Client) {
+    const logChannel = getLogChannel(client);
+
+    if (!logChannel?.isTextBased()) return;
+
+    const messages = await logChannel.messages.fetch({ limit: 100 });
+    
+    if (messages.size >= 5) {
+        await interaction.reply({
+            content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
+            ephemeral: true,
+        });
+
+        return;
+    }
+} 
+
 export const data = new SlashCommandBuilder()
     .setName('challenge')
     .setDescription('Challenge another Planeswalker')
@@ -25,8 +49,6 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction, client: Client) {
     try {
-        // Check #channel-log message count
-        // TODO: Check it upon 'Accept' or 'Reject' as well
         const guild = client.guilds.cache.get(process.env.GUILD_ID!);
         const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
         

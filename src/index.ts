@@ -13,7 +13,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
     activeChallenges,
+    checkMaxMessages,
     getChallengeKey,
+    getLogChannel,
 } from './commands/challenge.js';
 
 dotenv.config();
@@ -64,14 +66,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const challengeKey = getChallengeKey(interaction.user.id, challengerUser.id);
         
         if (action === 'accept') {
+            const logChannel = getLogChannel(client);
+            await checkMaxMessages(interaction, client);
             activeChallenges.delete(challengeKey);
 
+            // Notify target via DM
             await interaction.update({
                 content: `✅ You accepted the challenge from <@${challengerUser.id}>!`,
                 components: [],
             });
 
-            // Notify the challenger
+            // Notify the challenger via DM
             await challengerUser.send(`🎉 <@${interaction.user.id}> accepted your challenge!`);
 
             const embed = new EmbedBuilder()
@@ -80,21 +85,21 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 .setColor(0x00ff00)
                 .setTimestamp();
 
-            const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-            const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
-            
             if (logChannel?.isTextBased())
                 await logChannel.send({ embeds: [embed] });
         }
 
         if (action === 'reject') {
+            await checkMaxMessages(interaction, client);
             activeChallenges.delete(challengeKey);
 
+            // Notify target via DM
             await interaction.update({
                 content: `❌ You rejected the challenge from <@${challengerId}>.`,
                 components: [],
             });
     
+            // Notify the challenger via DM
             await challengerUser.send(`❌ <@${interaction.user.id}> rejected your challenge.`);
         }
     }
