@@ -52,6 +52,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         if (!command) return;
 
         try {
+            await interaction.reply({ content: 'DEBUG: command received!', ephemeral: true });
             await command.execute(interaction, client);
 
             await command.execute(interaction, client);
