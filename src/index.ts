@@ -48,6 +48,7 @@ for (const file of commandFiles) {
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isChatInputCommand()) {
         const command = client.commands.get(interaction.commandName);
+        console.log('Slash command received:', interaction.commandName);
         if (!command) return;
 
         try {
