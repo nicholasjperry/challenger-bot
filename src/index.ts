@@ -74,16 +74,17 @@ client.on(Events.InteractionCreate, async (interaction) => {
     else if (interaction.isButton()) {
         const [action, challengerId] = interaction.customId.split('-');
         const challengerUser = await client.users.fetch(challengerId);
-
         const challengeKey = getChallengeKey(interaction.user.id, challengerUser.id);
-        
-        if (action === 'accept') {
-            const logChannel = getLogChannel(client);
-            await checkMaxMessages(interaction, client);
-            activeChallenges.delete(challengeKey);
 
+        await interaction.deferUpdate();
+        
+        const logChannel = getLogChannel(client);
+        await checkMaxMessages(interaction, client);
+        activeChallenges.delete(challengeKey);
+
+        if (action === 'accept') {
             // Notify target via DM
-            await interaction.update({
+            await interaction.editReply({
                 content: `✅ You accepted the challenge from <@${challengerUser.id}>!`,
                 components: [],
             });
@@ -102,11 +103,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         }
 
         if (action === 'reject') {
-            await checkMaxMessages(interaction, client);
-            activeChallenges.delete(challengeKey);
-
             // Notify target via DM
-            await interaction.update({
+            await interaction.editReply({
                 content: `❌ You rejected the challenge from <@${challengerId}>.`,
                 components: [],
             });
