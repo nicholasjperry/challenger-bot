@@ -36,33 +36,39 @@ client.commands = new Collection();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
+const isDev = process.env.NODE_ENV !== 'production';
+const commandFiles = fs.readdirSync(commandsPath)
+    .filter(file => isDev ? file.endsWith('.ts') : file.endsWith('.js'));
 
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const command = await import(`file://${filePath}`);
-    if ('data' in command && 'execute' in command)
+    if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
+        console.log(`Loaded command: ${command.data.name}`);
+    }
+    else {
+        console.warn(`[WARNING] ${file} is missing "data" or "execute"`);
+    }
 }
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isChatInputCommand()) {
+        console.log('DEBUG: Slash command received:', interaction.commandName);
+
         const command = client.commands.get(interaction.commandName);
-        console.log('Slash command received:', interaction.commandName);
+        
+        console.log('DEBUG: Command found?', !!command);
+
         if (!command) return;
 
         try {
-            await interaction.reply({ content: 'DEBUG: command received!', ephemeral: true });
-            await command.execute(interaction, client);
-
             await command.execute(interaction, client);
         }
         catch (err) {
-            console.error(err);
-            if (!interaction.deferred && !interaction.replied)
-                await interaction.reply({ content: 'There was an error.', ephemeral: true });
-            else if (interaction.deferred)
-                await interaction.editReply({ content: 'There was an error.' });
+            console.error('Command execution error:', err);
+            if (interaction.isRepliable())
+                await interaction.reply({ content: 'Error executing command', ephemeral: true });
         }
     }
     else if (interaction.isButton()) {
