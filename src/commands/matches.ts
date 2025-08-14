@@ -3,6 +3,7 @@ import {
     Client,
     EmbedBuilder,
     SlashCommandBuilder,
+    TextChannel,
 } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
@@ -10,19 +11,23 @@ export const data = new SlashCommandBuilder()
   .setDescription(`List today's challenges`);
 
 export async function execute(interaction: ChatInputCommandInteraction, client: Client) {
+    await interaction.deferReply({ ephemeral: true });
+
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-        const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
+        const logChannel = guild?.channels.cache
+            .filter(c => c.isTextBased())
+            .find(c => c.name === 'challenge-log') as TextChannel | undefined;
     
-        if (!logChannel?.isTextBased()) {
-            await interaction.reply({
-                content: '⚠️ Could not find the challenge-log channel.',
-                ephemeral: true,
+        if (!logChannel || !logChannel?.isTextBased()) {
+            await interaction.editReply({
+                content: '⚠️ Could not find the challenge-log channel.'
             });
+
             return;
         }
     
-        const messages = await logChannel.messages.fetch({ limit: 100 });
+        const messages = await logChannel?.messages.fetch({ limit: 100 });
         
         const challengeEmbeds = messages
             .filter(m => m.author?.id === client.user?.id && m.embeds.length)
@@ -36,17 +41,12 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
             .setColor(0x00bfff)
             .setTimestamp();
     
-        await interaction.reply({ 
-            embeds: [embed], 
-            ephemeral: true,
-        });
+        await interaction.editReply({ embeds: [embed] });
     }
     catch (err) {
-        if (!interaction.replied) {
-            await interaction.reply({
-                content: '⚠️ Something went wrong while fetching matches.',
-                ephemeral: true,
-            });
-        }
+        console.error(err);
+        await interaction.editReply({
+            content: '⚠️ Something went wrong while fetching matches.'
+        });
     }
 }

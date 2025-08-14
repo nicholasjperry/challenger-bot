@@ -5,6 +5,7 @@ import {
   ButtonStyle,
   ActionRowBuilder,
   Client,
+  TextChannel,
 } from 'discord.js';
 
 export const activeChallenges = new Set<string>();
@@ -21,6 +22,8 @@ export function getLogChannel (client: Client) {
 }
 
 export async function checkMaxMessages(interaction: any, client: Client) {
+    await interaction.deferReply({ ephemeral: true });
+
     const logChannel = getLogChannel(client);
 
     if (!logChannel?.isTextBased()) return;
@@ -28,9 +31,8 @@ export async function checkMaxMessages(interaction: any, client: Client) {
     const messages = await logChannel.messages.fetch({ limit: 100 });
     
     if (messages.size >= 5) {
-        await interaction.reply({
-            content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
-            ephemeral: true,
+        await interaction.editReply({
+            content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.'
         });
 
         return;
@@ -48,24 +50,27 @@ export const data = new SlashCommandBuilder()
         );
 
 export async function execute(interaction: ChatInputCommandInteraction, client: Client) {
+    await interaction.deferReply({ ephemeral: true });
+
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-        const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
+        const logChannel = guild?.channels.cache
+            .filter(c => c.isTextBased())
+            .find(c => c.name === 'challenge-log') as TextChannel | undefined;
         
-        if (!logChannel?.isTextBased()) {
-            await interaction.reply({
-                content: '⚠️ Could not find the challenge-log channel.',
-                ephemeral: true,
+        if (!logChannel || !logChannel?.isTextBased()) {
+            await interaction.editReply({
+                content: '⚠️ Could not find the challenge-log channel.'
             });
+
             return;
         }
 
         const messages = await logChannel.messages.fetch({ limit: 100 });
 
         if (messages.size >= 5) {
-            await interaction.reply({
-                content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
-                ephemeral: true,
+            await interaction.editReply({
+                content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.'
             });
 
             return;
@@ -77,9 +82,8 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
         const challengeKey = getChallengeKey(targetUser.id, challengerUser.id);
 
         if (activeChallenges.has(challengeKey))
-            return interaction.reply({
-                content: 'There is already an active challenge between you two!',
-                ephemeral: true,
+            return interaction.editReply({
+                content: 'There is already an active challenge between you two!'
             });
         else
             activeChallenges.add(challengeKey);
@@ -105,15 +109,14 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
         });
 
         // Notify challenger in server chat
-        await interaction.reply({
-            content: `Challenge sent to <@${targetUser.id}> via DM!`,
-            ephemeral: true,
+        await interaction.editReply({
+            content: `Challenge sent to <@${targetUser.id}> via DM!`
         });
     }
     catch (err) {
         console.error('Failed to send DM:', err);
-        await interaction.reply({
-            content: `Could not send DM.  They might have DMs disabled.`,
+        await interaction.editReply({
+            content: 'Could not send DM.  They might have DMs disabled.'
         });
     }
 }
