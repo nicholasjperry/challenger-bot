@@ -10,10 +10,7 @@ export const data = new SlashCommandBuilder()
   .setDescription(`List today's challenges`);
 
 export async function execute(interaction: ChatInputCommandInteraction, client: Client) {
-    await interaction.reply({ content: 'Command received!', ephemeral: true });
-    
     try {
-
         const guild = client.guilds.cache.get(process.env.GUILD_ID!);
         const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
     
