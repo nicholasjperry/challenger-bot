@@ -49,10 +49,18 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction, client: Client) {
     try {
+        await interaction.reply({ content: 'Command received!', ephemeral: true });
+
         const guild = client.guilds.cache.get(process.env.GUILD_ID!);
         const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
         
-        if (!logChannel?.isTextBased()) return;
+        if (!logChannel?.isTextBased()) {
+            await interaction.reply({
+                content: '⚠️ Could not find the challenge-log channel.',
+                ephemeral: true,
+            });
+            return;
+        }
 
         const messages = await logChannel.messages.fetch({ limit: 100 });
 
