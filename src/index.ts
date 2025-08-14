@@ -53,11 +53,15 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
         try {
             await command.execute(interaction, client);
+
+            await command.execute(interaction, client);
         }
         catch (err) {
             console.error(err);
-            if (!interaction.replied)
+            if (!interaction.deferred && !interaction.replied)
                 await interaction.reply({ content: 'There was an error.', ephemeral: true });
+            else if (interaction.deferred)
+                await interaction.editReply({ content: 'There was an error.' });
         }
     }
     else if (interaction.isButton()) {
