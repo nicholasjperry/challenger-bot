@@ -16,9 +16,7 @@ export function getChallengeKey(targetUserId: string, challengerUserId: string) 
 
 export function getLogChannel (client: Client) {
     const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-    const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
-
-    return logChannel;
+    return guild?.channels.cache.find(c => c.name === 'challenge-log');
 }
 
 export async function checkMaxMessages(interaction: any, client: Client) {
@@ -55,9 +53,9 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
 
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-        const logChannel = guild?.channels.cache
-            .filter(c => c.isTextBased())
-            .find(c => c.name === 'challenge-log') as TextChannel | undefined;
+        const logChannel = guild?.channels.cache.find(
+            c => c.isTextBased() && c.name === 'challenge-log'
+        ) as TextChannel | undefined;
         
         if (!logChannel || !logChannel?.isTextBased()) {
             await interaction.editReply({
@@ -81,11 +79,12 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
         const challengerUser = interaction.user;
 
         const challengeKey = getChallengeKey(targetUser.id, challengerUser.id);
-
-        if (activeChallenges.has(challengeKey))
-            return interaction.editReply({
+        if (activeChallenges.has(challengeKey)) {
+            await interaction.editReply({
                 content: 'There is already an active challenge between you two!'
             });
+            return;
+        }
         else
             activeChallenges.add(challengeKey);
 
@@ -101,13 +100,19 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
     
         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, rejectButton);
     
-        // DM target
-        await targetUser.send({
-            content: `You have been challenged by <@${challengerUser.id}>!  Do you accept?`,
-            components: [
-                row,
-            ],
-        });
+        try {
+            // DM target
+            await targetUser.send({
+                content: `You have been challenged by <@${challengerUser.id}>!  Do you accept?`,
+                components: [
+                    row,
+                ],
+            });
+    
+        }
+        catch (err) {
+            console.error('Failed to DM target user:', err);
+        }
 
         // Notify challenger in server chat
         await interaction.editReply({
@@ -115,9 +120,18 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
         });
     }
     catch (err) {
-        console.error('Failed to send DM:', err);
-        await interaction.editReply({
-            content: 'Could not send DM.  They might have DMs disabled.'
-        });
+        console.error('Error executing challenge command:', err);
+        
+        if (interaction.replied || interaction.deferred) {
+            await interaction.editReply({
+                content: '⚠️ An unexpected error occurred while sending the challenge.'
+            });
+        }
+        else {
+            await interaction.reply({
+                content: '⚠️ An unexpected error occurred while sending the challenge.',
+                ephemeral: true,
+            });
+        }
     }
 }
