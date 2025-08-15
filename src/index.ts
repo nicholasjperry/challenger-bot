@@ -53,65 +53,76 @@ for (const file of commandFiles) {
 }
 
 client.on(Events.InteractionCreate, async (interaction) => {
-    if (interaction.isChatInputCommand()) {
-        console.log('DEBUG: Slash command received:', interaction.commandName);
-
-        const command = client.commands.get(interaction.commandName);
-        
-        console.log('DEBUG: Command found?', !!command);
-
-        if (!command) return;
-
-        try {
-            await command.execute(interaction, client);
+    try {
+        if (interaction.isChatInputCommand()) {
+            console.log('DEBUG: Slash command received:', interaction.commandName);
+    
+            const command = client.commands.get(interaction.commandName);
+            
+            console.log('DEBUG: Command found?', !!command);
+    
+            if (!command) return;
+    
+            try {
+                await command.execute(interaction, client);
+            }
+            catch (err) {
+                console.error('Command execution error:', err);
+                if (interaction.isRepliable())
+                    await interaction.reply({ content: 'Error executing command', ephemeral: true });
+            }
         }
-        catch (err) {
-            console.error('Command execution error:', err);
-            if (interaction.isRepliable())
-                await interaction.reply({ content: 'Error executing command', ephemeral: true });
+        else if (interaction.isButton()) {
+            const [action, challengerId] = interaction.customId.split('-');
+            const challengerUser = await client.users.fetch(challengerId);
+            const challengeKey = getChallengeKey(interaction.user.id, challengerUser.id);
+    
+            await interaction.deferUpdate();
+
+            const limitReached = await checkMaxMessages(interaction, client);
+
+            if (limitReached) {
+                activeChallenges.delete(challengeKey);
+                return;
+            }
+            
+            activeChallenges.delete(challengeKey);
+            const logChannel = getLogChannel(client);
+    
+            if (action === 'accept') {
+                // Notify target via DM
+                await interaction.editReply({
+                    content: `✅ You accepted the challenge from <@${challengerUser.id}>!`,
+                    components: [],
+                });
+    
+                // Notify the challenger via DM
+                await challengerUser.send(`🎉 <@${interaction.user.id}> accepted your challenge!`);
+    
+                const embed = new EmbedBuilder()
+                    .setTitle('✅ Challenge Accepted!')
+                    .setDescription(`<@${interaction.user.id}> 🆚 <@${challengerId}>`)
+                    .setColor(0x00ff00)
+                    .setTimestamp();
+    
+                if (logChannel?.isTextBased())
+                    await logChannel.send({ embeds: [embed] });
+            }
+    
+            if (action === 'reject') {
+                // Notify target via DM
+                await interaction.editReply({
+                    content: `❌ You rejected the challenge from <@${challengerId}>.`,
+                    components: [],
+                });
+        
+                // Notify the challenger via DM
+                await challengerUser.send(`❌ <@${interaction.user.id}> rejected your challenge.`);
+            }
         }
     }
-    else if (interaction.isButton()) {
-        const [action, challengerId] = interaction.customId.split('-');
-        const challengerUser = await client.users.fetch(challengerId);
-        const challengeKey = getChallengeKey(interaction.user.id, challengerUser.id);
-
-        await interaction.deferUpdate();
-        
-        const logChannel = getLogChannel(client);
-        await checkMaxMessages(interaction, client);
-        activeChallenges.delete(challengeKey);
-
-        if (action === 'accept') {
-            // Notify target via DM
-            await interaction.editReply({
-                content: `✅ You accepted the challenge from <@${challengerUser.id}>!`,
-                components: [],
-            });
-
-            // Notify the challenger via DM
-            await challengerUser.send(`🎉 <@${interaction.user.id}> accepted your challenge!`);
-
-            const embed = new EmbedBuilder()
-                .setTitle('✅ Challenge Accepted!')
-                .setDescription(`<@${interaction.user.id}> 🆚 <@${challengerId}>`)
-                .setColor(0x00ff00)
-                .setTimestamp();
-
-            if (logChannel?.isTextBased())
-                await logChannel.send({ embeds: [embed] });
-        }
-
-        if (action === 'reject') {
-            // Notify target via DM
-            await interaction.editReply({
-                content: `❌ You rejected the challenge from <@${challengerId}>.`,
-                components: [],
-            });
-    
-            // Notify the challenger via DM
-            await challengerUser.send(`❌ <@${interaction.user.id}> rejected your challenge.`);
-        }
+    catch (err) {
+        console.error('Interaction error:', err);
     }
 });
 

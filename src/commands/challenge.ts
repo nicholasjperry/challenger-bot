@@ -22,8 +22,6 @@ export function getLogChannel (client: Client) {
 }
 
 export async function checkMaxMessages(interaction: any, client: Client) {
-    await interaction.deferReply({ ephemeral: true });
-
     const logChannel = getLogChannel(client);
 
     if (!logChannel?.isTextBased()) return;
@@ -31,12 +29,15 @@ export async function checkMaxMessages(interaction: any, client: Client) {
     const messages = await logChannel.messages.fetch({ limit: 100 });
     
     if (messages.size >= 5) {
-        await interaction.editReply({
-            content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.'
+        await interaction.followUp({
+            content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
+            ephemeral: true,
         });
 
-        return;
+        return true;
     }
+
+    return false;
 } 
 
 export const data = new SlashCommandBuilder()
