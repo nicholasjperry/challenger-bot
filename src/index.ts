@@ -75,7 +75,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
         else if (interaction.isButton()) {
             const [action, challengerId] = interaction.customId.split('-');
             const challengerUser = await client.users.fetch(challengerId);
-            const challengeKey = getChallengeKey(interaction.user.id, challengerUser.id);
+            const targetUser = interaction.user;
+            const challengeKey = getChallengeKey(targetUser.id, challengerUser.id);
     
             await interaction.deferUpdate();
 
@@ -89,37 +90,88 @@ client.on(Events.InteractionCreate, async (interaction) => {
             activeChallenges.delete(challengeKey);
             const logChannel = getLogChannel(client);
     
-            // TODO: Start here tomorrow
-            if (action === 'accept') {
-                // Notify target via DM
+            if (action === 'challengerDeckOne') {
                 await interaction.editReply({
-                    content: `✅ You accepted the challenge from <@${challengerUser.id}>!`,
+                    content: `🎉 You chose Deck 1!`,
                     components: [],
                 });
-    
-                // Notify the challenger via DM
-                await challengerUser.send(`🎉 <@${interaction.user.id}> accepted your challenge!`);
-    
+
                 const embed = new EmbedBuilder()
-                    .setTitle('✅ Challenge Accepted!')
-                    .setDescription(`<@${interaction.user.id}> 🆚 <@${challengerId}>`)
+                    .setDescription(`<@${challengerUser.id}> chose Deck 1!`)
                     .setColor(0x00ff00)
                     .setTimestamp();
-    
+
+                if (logChannel?.isTextBased())
+                    await logChannel.send({ embeds: [embed] });
+            }
+
+            if (action === 'challengerDeckTwo') {
+                await interaction.editReply({
+                    content: `🎉 You chose Deck 2!`,
+                    components: [],
+                });
+
+                const embed = new EmbedBuilder()
+                    .setDescription(`<@${challengerUser.id}> chose Deck 2!`)
+                    .setColor(0x00ff00)
+                    .setTimestamp();
+
+                if (logChannel?.isTextBased())
+                    await logChannel.send({ embeds: [embed] });
+            }
+
+            if (action === 'targetDeckOne') {
+                await interaction.editReply({
+                    content: `🎉 You chose Deck 1!`,
+                    components: [],
+                });
+
+                const embed = new EmbedBuilder()
+                    .setDescription(`<@${targetUser.id}> chose Deck 1!`)
+                    .setColor(0x00ff00)
+                    .setTimestamp();
+
+                if (logChannel?.isTextBased())
+                    await logChannel.send({ embeds: [embed] });
+            }
+
+            if (action === 'targetDeckTwo') {
+                await interaction.editReply({
+                    content: `🎉 You chose Deck 2!`,
+                    components: [],
+                });
+
+                const embed = new EmbedBuilder()
+                    .setDescription(`<@${targetUser.id}> chose Deck 2!`)
+                    .setColor(0x00ff00)
+                    .setTimestamp();
+
                 if (logChannel?.isTextBased())
                     await logChannel.send({ embeds: [embed] });
             }
     
-            if (action === 'reject') {
-                // Notify target via DM
-                await interaction.editReply({
-                    content: `❌ You rejected the challenge from <@${challengerId}>.`,
-                    components: [],
-                });
+            // Notify the challenger via DM
+            // await challengerUser.send(`🎉 <@${interaction.user.id}> accepted your challenge!`);
+
+            // const embed = new EmbedBuilder()
+            //     .setTitle('✅ Challenge Accepted!')
+            //     .setDescription(`<@${interaction.user.id}> 🆚 <@${challengerId}>`)
+            //     .setColor(0x00ff00)
+            //     .setTimestamp();
+
+            // if (logChannel?.isTextBased())
+            //     await logChannel.send({ embeds: [embed] });
+    
+            // if (action === 'reject') {
+            //     // Notify target via DM
+            //     await interaction.editReply({
+            //         content: `❌ You rejected the challenge from <@${challengerId}>.`,
+            //         components: [],
+            //     });
         
-                // Notify the challenger via DM
-                await challengerUser.send(`❌ <@${interaction.user.id}> rejected your challenge.`);
-            }
+            //     // Notify the challenger via DM
+            //     await challengerUser.send(`❌ <@${interaction.user.id}> rejected your challenge.`);
+            // }
         }
     }
     catch (err) {

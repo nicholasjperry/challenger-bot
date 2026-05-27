@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rimraf ./dist && tsc",
     "commands": "node --loader ts-node/esm src/deploy-commands.ts",
-    "debug": "nodemon --watch src --ext ts --exec \"node --inspect-brk --loader ts-node/esm\" src/index.ts",
+    "debug": "nodemon --inspect --loader ts-node/esm src/index.ts",
     "dev": "nodemon --loader ts-node/esm src/index.ts",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"

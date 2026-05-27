@@ -67,7 +67,7 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
 
         const messages = await logChannel.messages.fetch({ limit: 100 });
 
-        if (messages.size >= 5) {
+        if (messages.size >= 10) {
             await interaction.editReply({
                 content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.'
             });
@@ -91,38 +91,46 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
         const challengerUserDeckOneButton = new ButtonBuilder()
             .setCustomId(`challengerDeckOne-${challengerUser.id}`)
             .setLabel('Deck 1')
-            .setStyle(ButtonStyle.Link)
+            .setStyle(ButtonStyle.Primary)
     
         const challengerUserDeckTwoButton = new ButtonBuilder()
             .setCustomId(`challengerDeckTwo-${challengerUser.id}`)
             .setLabel('Deck 2')
-            .setStyle(ButtonStyle.Link)
+            .setStyle(ButtonStyle.Primary)
 
         const targetUserDeckOneButton = new ButtonBuilder()
-            .setCustomId(`targetDeckOne-${challengerUser.id}`)
+            .setCustomId(`targetDeckOne-${targetUser.id}`)
             .setLabel('Deck 1')
-            .setStyle(ButtonStyle.Link)
+            .setStyle(ButtonStyle.Primary)
     
         const targetUserDeckTwoButton = new ButtonBuilder()
-            .setCustomId(`targetDeckTwo-${challengerUser.id}`)
+            .setCustomId(`targetDeckTwo-${targetUser.id}`)
             .setLabel('Deck 2')
-            .setStyle(ButtonStyle.Link)
+            .setStyle(ButtonStyle.Primary)
     
         const challengerRow = new ActionRowBuilder<ButtonBuilder>().addComponents(challengerUserDeckOneButton, challengerUserDeckTwoButton);
         const targetRow = new ActionRowBuilder<ButtonBuilder>().addComponents(targetUserDeckOneButton, targetUserDeckTwoButton);
+
+        if (targetUser === challengerUser) {
+            await interaction.editReply({
+                content: '⚠️ You cannot challenge yourself!'
+            });
+
+            return;
+        }
     
         try {
-            // DM both users with deck selection choices
+            // DM both users with their deck selection choices
             await targetUser.send({
-                content: `You have been challenged by <@${challengerUser.id}>!  Choose either your 'Deck 1' or 'Deck 2'.`,
+                content: `You have been challenged by <@${challengerUser.id}>!  Choose to play Deck 1 or Deck 2.`,
                 components: [
-                    challengerRow,
+                    targetRow,
                 ],
             });
             await challengerUser.send({
-                content: `You challenged <@${targetUser.id}>!  Choose either your 'Deck 1' or 'Deck 2'.`,
+                content: `You have challenged <@${targetUser.id}>!  Choose to play Deck 1 or Deck 2.`,
                 components: [
-                    targetRow,
+                    challengerRow,
                 ],
             });
         }
