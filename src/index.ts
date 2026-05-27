@@ -89,6 +89,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
             activeChallenges.delete(challengeKey);
             const logChannel = getLogChannel(client);
     
+            // TODO: Start here tomorrow
             if (action === 'accept') {
                 // Notify target via DM
                 await interaction.editReply({

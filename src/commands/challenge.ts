@@ -88,27 +88,43 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
         else
             activeChallenges.add(challengeKey);
 
-        const acceptButton = new ButtonBuilder()
-            .setCustomId(`accept-${challengerUser.id}`)
-            .setLabel('Accept')
-            .setStyle(ButtonStyle.Success)
+        const challengerUserDeckOneButton = new ButtonBuilder()
+            .setCustomId(`challengerDeckOne-${challengerUser.id}`)
+            .setLabel('Deck 1')
+            .setStyle(ButtonStyle.Link)
     
-        const rejectButton = new ButtonBuilder()
-            .setCustomId(`reject-${challengerUser.id}`)
-            .setLabel('Reject')
-            .setStyle(ButtonStyle.Danger)
+        const challengerUserDeckTwoButton = new ButtonBuilder()
+            .setCustomId(`challengerDeckTwo-${challengerUser.id}`)
+            .setLabel('Deck 2')
+            .setStyle(ButtonStyle.Link)
+
+        const targetUserDeckOneButton = new ButtonBuilder()
+            .setCustomId(`targetDeckOne-${challengerUser.id}`)
+            .setLabel('Deck 1')
+            .setStyle(ButtonStyle.Link)
     
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, rejectButton);
+        const targetUserDeckTwoButton = new ButtonBuilder()
+            .setCustomId(`targetDeckTwo-${challengerUser.id}`)
+            .setLabel('Deck 2')
+            .setStyle(ButtonStyle.Link)
+    
+        const challengerRow = new ActionRowBuilder<ButtonBuilder>().addComponents(challengerUserDeckOneButton, challengerUserDeckTwoButton);
+        const targetRow = new ActionRowBuilder<ButtonBuilder>().addComponents(targetUserDeckOneButton, targetUserDeckTwoButton);
     
         try {
-            // DM target
+            // DM both users with deck selection choices
             await targetUser.send({
-                content: `You have been challenged by <@${challengerUser.id}>!  Do you accept?`,
+                content: `You have been challenged by <@${challengerUser.id}>!  Choose either your 'Deck 1' or 'Deck 2'.`,
                 components: [
-                    row,
+                    challengerRow,
                 ],
             });
-    
+            await challengerUser.send({
+                content: `You challenged <@${targetUser.id}>!  Choose either your 'Deck 1' or 'Deck 2'.`,
+                components: [
+                    targetRow,
+                ],
+            });
         }
         catch (err) {
             console.error('Failed to DM target user:', err);
