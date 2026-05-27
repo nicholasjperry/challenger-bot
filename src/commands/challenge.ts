@@ -26,7 +26,7 @@ export async function checkMaxMessages(interaction: any, client: Client) {
 
     const messages = await logChannel.messages.fetch({ limit: 100 });
     
-    if (messages.size >= 5) {
+    if (messages.size >= 10) {
         await interaction.followUp({
             content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
             ephemeral: true,
