@@ -1,12 +1,15 @@
 import {
-  SlashCommandBuilder,
-  ChatInputCommandInteraction,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
-  Client,
-  TextChannel,
+    SlashCommandBuilder,
+    ChatInputCommandInteraction,
+    ButtonBuilder,
+    ButtonStyle,
+    ActionRowBuilder,
+    Client,
+    TextChannel,
 } from 'discord.js';
+
+// Structure: Map<challengeKey, { challenger?: number, target?: number }>
+export const deckChoices = new Map();
 
 export const activeChallenges = new Set<string>();
 

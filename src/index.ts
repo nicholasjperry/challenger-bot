@@ -16,6 +16,7 @@ import {
     checkMaxMessages,
     getChallengeKey,
     getLogChannel,
+    deckChoices,
 } from './commands/challenge.js';
 
 dotenv.config();
@@ -86,68 +87,62 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 activeChallenges.delete(challengeKey);
                 return;
             }
-            
-            activeChallenges.delete(challengeKey);
-            const logChannel = getLogChannel(client);
-    
+
+            // In-memory deck selection logic
+            let entry = deckChoices.get(challengeKey) || {};
+            let updated = false;
+
             if (action === 'challengerDeckOne') {
                 await interaction.editReply({
                     content: `🎉 You chose Deck 1!`,
                     components: [],
                 });
-
-                const embed = new EmbedBuilder()
-                    .setDescription(`<@${challengerUser.id}> chose Deck 1!`)
-                    .setColor(0x00ff00)
-                    .setTimestamp();
-
-                if (logChannel?.isTextBased())
-                    await logChannel.send({ embeds: [embed] });
+                entry.challenger = 1;
+                updated = true;
             }
-
             if (action === 'challengerDeckTwo') {
                 await interaction.editReply({
                     content: `🎉 You chose Deck 2!`,
                     components: [],
                 });
-
-                const embed = new EmbedBuilder()
-                    .setDescription(`<@${challengerUser.id}> chose Deck 2!`)
-                    .setColor(0x00ff00)
-                    .setTimestamp();
-
-                if (logChannel?.isTextBased())
-                    await logChannel.send({ embeds: [embed] });
+                entry.challenger = 2;
+                updated = true;
             }
-
             if (action === 'targetDeckOne') {
                 await interaction.editReply({
                     content: `🎉 You chose Deck 1!`,
                     components: [],
                 });
-
-                const embed = new EmbedBuilder()
-                    .setDescription(`<@${targetUser.id}> chose Deck 1!`)
-                    .setColor(0x00ff00)
-                    .setTimestamp();
-
-                if (logChannel?.isTextBased())
-                    await logChannel.send({ embeds: [embed] });
+                entry.target = 1;
+                updated = true;
             }
-
             if (action === 'targetDeckTwo') {
                 await interaction.editReply({
                     content: `🎉 You chose Deck 2!`,
                     components: [],
                 });
+                entry.target = 2;
+                updated = true;
+            }
 
-                const embed = new EmbedBuilder()
-                    .setDescription(`<@${targetUser.id}> chose Deck 2!`)
-                    .setColor(0x00ff00)
-                    .setTimestamp();
+            if (updated)
+                deckChoices.set(challengeKey, entry);
 
-                if (logChannel?.isTextBased())
+            if (entry.challenger && entry.target) {
+                activeChallenges.delete(challengeKey);
+                deckChoices.delete(challengeKey);
+                const logChannel = getLogChannel(client);
+                if (logChannel?.isTextBased()) {
+                    const embed = new EmbedBuilder()
+                        .setTitle('Deck Choices Revealed!')
+                        .setDescription(
+                            `<@${challengerUser.id}> chose Deck ${entry.challenger} \n<@${targetUser.id}> chose Deck ${entry.target}`
+                        )
+                        .setColor(0x00ff00)
+                        .setTimestamp();
+
                     await logChannel.send({ embeds: [embed] });
+                }
             }
     
             // Notify the challenger via DM
