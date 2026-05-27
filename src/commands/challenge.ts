@@ -13,8 +13,8 @@ export const deckChoices = new Map();
 
 export const activeChallenges = new Set<string>();
 
-export function getChallengeKey(targetUserId: string, challengerUserId: string) {
-    return [targetUserId, challengerUserId].sort().join(':');
+export function getChallengeKey(challengerUserId: string, targetUserId: string) {
+    return [challengerUserId, targetUserId].sort().join(':');
 }
 
 export function getLogChannel (client: Client) {
@@ -81,7 +81,7 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
         const targetUser = interaction.options.getUser('name', true);
         const challengerUser = interaction.user;
 
-        const challengeKey = getChallengeKey(targetUser.id, challengerUser.id);
+        const challengeKey = getChallengeKey(challengerUser.id, targetUser.id);
         if (activeChallenges.has(challengeKey)) {
             await interaction.editReply({
                 content: 'There is already an active challenge between you two!'

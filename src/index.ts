@@ -74,10 +74,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
             }
         }
         else if (interaction.isButton()) {
-            const [action, challengerId] = interaction.customId.split('-');
-            const challengerUser = await client.users.fetch(challengerId);
-            const targetUser = interaction.user;
-            const challengeKey = getChallengeKey(targetUser.id, challengerUser.id);
+            const [action, id] = interaction.customId.split('-');
+            let challengerUser, targetUser;
+
+            if (action.startsWith('challengerDeck')) {
+                challengerUser = await client.users.fetch(id);
+                targetUser = interaction.user;
+            } else if (action.startsWith('targetDeck')) {
+                targetUser = await client.users.fetch(id);
+                challengerUser = interaction.user;
+            }
+
+            const challengeKey = getChallengeKey(challengerUser.id, targetUser.id);
     
             await interaction.deferUpdate();
 
@@ -89,7 +97,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
             }
 
             // In-memory deck selection logic
-            let entry = deckChoices.get(challengeKey) || {};
+
+            let entry = deckChoices.get(challengeKey) || { challenger: undefined, target: undefined };
             let updated = false;
 
             if (action === 'challengerDeckOne') {
@@ -125,9 +134,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 updated = true;
             }
 
-            if (updated)
+            if (updated) {
                 deckChoices.set(challengeKey, entry);
+            }
 
+            // Only print to log if both have chosen
             if (entry.challenger && entry.target) {
                 activeChallenges.delete(challengeKey);
                 deckChoices.delete(challengeKey);
@@ -140,7 +151,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
                         )
                         .setColor(0x00ff00)
                         .setTimestamp();
-
                     await logChannel.send({ embeds: [embed] });
                 }
             }
