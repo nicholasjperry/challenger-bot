@@ -79,9 +79,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 await interaction.deferUpdate();
 
                 const [action, challengerId, targetId] = interaction.customId.split('-');
-
                 const challengeKey = [challengerId, targetId].sort().join('-');
-
                 const challenge = activeChallenges.get(challengeKey);
 
                 if (!challenge) {
@@ -89,16 +87,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
                     return;
                 }
 
-                const { challengerId: realChallengerId, targetId: realTargetId } = challenge;
+                const { 
+                    challengerId: realChallengerId,
+                    targetId: realTargetId
+                } = challenge;
+
+                const playerDecks = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/playerDecks.json'), 'utf-8')).playerDecks;
+                const challengerDecks = playerDecks.find((p: any) => p.playerId === realChallengerId);
+                const targetDecks = playerDecks.find((p: any) => p.playerId === realTargetId);
 
                 const deckMap = {
-                    challengerDeckOne: 1,
-                    challengerDeckTwo: 2,
-                    targetDeckOne: 1,
-                    targetDeckTwo: 2,
-                } as const;
+                    challengerDeckOne: challengerDecks?.deckOne,
+                    challengerDeckTwo: challengerDecks?.deckTwo,
+                    targetDeckOne: targetDecks?.deckOne,
+                    targetDeckTwo: targetDecks?.deckTwo,
+                };
 
-                const value = deckMap[action as keyof typeof deckMap];
+                const value = deckMap[action];
 
                 if (!value) {
                     console.log('INVALID ACTION:', action);
@@ -106,8 +111,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 }
 
                 let entry = deckChoices.get(challengeKey) || {
-                    challenger: undefined as number | undefined,
-                    target: undefined as number | undefined,
+                    challenger: undefined as string | undefined,
+                    target: undefined as string | undefined,
                 };
 
                 console.log('BEFORE:', entry);
@@ -126,7 +131,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 deckChoices.set(challengeKey, entry);
 
                 await interaction.followUp({
-                    content: `You chose Deck ${value}`,
+                    content: `You chose ${value}`,
                     ephemeral: true,
                 });
 
@@ -140,8 +145,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
                         await logChannel.send({
                             content:
                                 `🎴 Deck Choices Revealed 🎴\n` +
-                                `<@${realChallengerId}> chose Deck ${entry.challenger}\n` +
-                                `<@${realTargetId}> chose Deck ${entry.target}`,
+                                `<@${realChallengerId}> chose ${entry.challenger}\n` +
+                                `<@${realTargetId}> chose ${entry.target}`,
                         });
                     }
                 }

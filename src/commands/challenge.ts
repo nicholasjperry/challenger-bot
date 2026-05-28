@@ -7,13 +7,19 @@ import {
     Client,
     TextChannel,
 } from 'discord.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Stores per-player deck choices
 export const deckChoices = new Map<
     string,
     {
-        challenger?: number;
-        target?: number;
+        challenger?: string;
+        target?: string;
     }
 >();
 
@@ -124,33 +130,37 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
             targetId: targetUser.id,
         });
 
+        const playerDecks = JSON.parse(fs.readFileSync(path.join(__dirname, '../../data/playerDecks.json'), 'utf-8')).playerDecks;
+        const challengerDecks = playerDecks.find((p: any) => p.playerId === challengerUser.id);
+        const targetDecks = playerDecks.find((p: any) => p.playerId === targetUser.id);
+
         // Buttons (consistent IDs — NO flipping)
         const challengerUserDeckOneButton = new ButtonBuilder()
             .setCustomId(
                 `challengerDeckOne-${challengerUser.id}-${targetUser.id}`
             )
-            .setLabel('Deck 1')
+            .setLabel(challengerDecks?.deckOne || 'Deck 1')
             .setStyle(ButtonStyle.Primary);
 
         const challengerUserDeckTwoButton = new ButtonBuilder()
             .setCustomId(
                 `challengerDeckTwo-${challengerUser.id}-${targetUser.id}`
             )
-            .setLabel('Deck 2')
+            .setLabel(challengerDecks?.deckTwo || 'Deck 2')
             .setStyle(ButtonStyle.Primary);
 
         const targetUserDeckOneButton = new ButtonBuilder()
             .setCustomId(
                 `targetDeckOne-${challengerUser.id}-${targetUser.id}`
             )
-            .setLabel('Deck 1')
+            .setLabel(targetDecks?.deckOne || 'Deck 1')
             .setStyle(ButtonStyle.Primary);
 
         const targetUserDeckTwoButton = new ButtonBuilder()
             .setCustomId(
                 `targetDeckTwo-${challengerUser.id}-${targetUser.id}`
             )
-            .setLabel('Deck 2')
+            .setLabel(targetDecks?.deckTwo || 'Deck 2')
             .setStyle(ButtonStyle.Primary);
 
         const challengerRow = new ActionRowBuilder<ButtonBuilder>().addComponents(

@@ -1,0 +1,89 @@
+{
+    "playerDecks": [
+        {
+            "playerId": "280171946727964684",
+            "deckOne": "Yuriko, the Tiger's Shadow",
+            "deckTwo": "Voja, Jaws of the Conclave"
+        },
+        {
+            "playerId": "140635871207620608",
+            "deckOne": "Sokka, Tenacious Tactician",
+            "deckTwo": "The Gitrog, Ravenous Ride"
+        },
+        {
+            "playerId": "339976141702037505",
+            "deckOne": "Kavaero, Mind-Bitten",
+            "deckTwo": "Pantlaza, Sun-Favored"
+        },
+        {
+            "playerId": "230836832684867584",
+            "deckOne": "Omnath, Locus of Rage",
+            "deckTwo": "Alela, Artful Provocateur"
+        },
+        {
+            "playerId": "131203541049016320",
+            "deckOne": "Rusko, Clockmaker",
+            "deckTwo": "Voja, Jaws of the Conclave"
+        },
+        {
+            "playerId": "272209963122950146",
+            "deckOne": "Tamiyo, Field Researcher",
+            "deckTwo": "Laughing Jasper Flint"
+        },
+        {
+            "playerId": "368225920298909697",
+            "deckOne": "Tannuk, Memorial Ensign",
+            "deckTwo": "Hashaton, Scarab's Fist"
+        },
+        {
+            "playerId": "108353331977580544",
+            "deckOne": "Raffine, Scheming Seer",
+            "deckTwo": "Roxanne, Starfall Savant"
+        },
+        {
+            "playerId": "274014706576916483",
+            "deckOne": "Dark Leo & Shredder",
+            "deckTwo": "Eshki, Temur's Roar"
+        },
+        {
+            "playerId": "384424176926195714",
+            "deckOne": "Jetmir, Nexus of Revels",
+            "deckTwo": "Gyruda, Doom of Depths"
+        },
+        {
+            "playerId": "346389429805383682",
+            "deckOne": "Flubs, the Fool",
+            "deckTwo": "Greasefang, Okiba Boss"
+        },
+        {
+            "playerId": "618408105675587604",
+            "deckOne": "Inalla, Archmage Ritualist",
+            "deckTwo": "Karametra, God of Harvests"
+        },
+        {
+            "playerId": "154767794146115584",
+            "deckOne": "Leovold, Emissary of Trest",
+            "deckTwo": "Iroh, Tea Master"
+        },
+        {
+            "playerId": "208419852270960640",
+            "deckOne": "Tamiyo, Field Researcher",
+            "deckTwo": "Angrath, the Flame-Chained"
+        },
+        {
+            "playerId": "273660853570502657",
+            "deckOne": "Emet-Selch, Unsundered",
+            "deckTwo": "Emperor Apatzec Intli IV"
+        },
+        {
+            "playerId": "225085483972165632",
+            "deckOne": "Goro-Goro and Satoru",
+            "deckTwo": "Sythis, Harvest's Hand"
+        },
+        {
+            "playerId": "1039741862090657792",
+            "deckOne": "Ragavan, Nimble Pilferer",
+            "deckTwo": "Baral, Chief of Compliance"
+        }
+    ]
+}
