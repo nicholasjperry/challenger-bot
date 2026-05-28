@@ -130,9 +130,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
                 deckChoices.set(challengeKey, entry);
 
-                await interaction.followUp({
+                await interaction.editReply({
                     content: `You chose ${value}`,
-                    ephemeral: true,
+                    components: [],
                 });
 
                 if (entry.challenger && entry.target) {
