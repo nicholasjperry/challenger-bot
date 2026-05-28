@@ -1,7 +1,6 @@
 import { 
     Client,
     Collection,
-    EmbedBuilder,
     Events,
     GatewayIntentBits,
     Partials,
@@ -13,8 +12,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
     activeChallenges,
-    checkMaxMessages,
-    getChallengeKey,
     getLogChannel,
     deckChoices,
 } from './commands/challenge.js';
@@ -57,130 +54,104 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
         if (interaction.isChatInputCommand()) {
             console.log('DEBUG: Slash command received:', interaction.commandName);
-    
+
             const command = client.commands.get(interaction.commandName);
-            
+
             console.log('DEBUG: Command found?', !!command);
-    
+
             if (!command) return;
-    
+
             try {
                 await command.execute(interaction, client);
-            }
-            catch (err) {
+            } catch (err) {
                 console.error('Command execution error:', err);
-                if (interaction.isRepliable())
-                    await interaction.reply({ content: 'Error executing command', ephemeral: true });
+
+                if (interaction.isRepliable()) {
+                    await interaction.reply({
+                        content: 'Error executing command',
+                        ephemeral: true,
+                    });
+                }
             }
         }
         else if (interaction.isButton()) {
-            const [action, id] = interaction.customId.split('-');
-            let challengerUser, targetUser;
+            try {
+                await interaction.deferUpdate();
 
-            if (action.startsWith('challengerDeck')) {
-                challengerUser = await client.users.fetch(id);
-                targetUser = interaction.user;
-            } else if (action.startsWith('targetDeck')) {
-                targetUser = await client.users.fetch(id);
-                challengerUser = interaction.user;
-            }
+                const [action, challengerId, targetId] = interaction.customId.split('-');
 
-            const challengeKey = getChallengeKey(challengerUser.id, targetUser.id);
-    
-            await interaction.deferUpdate();
+                const challengeKey = [challengerId, targetId].sort().join('-');
 
-            const limitReached = await checkMaxMessages(interaction, client);
+                const challenge = activeChallenges.get(challengeKey);
 
-            if (limitReached) {
-                activeChallenges.delete(challengeKey);
-                return;
-            }
-
-            // In-memory deck selection logic
-
-            let entry = deckChoices.get(challengeKey) || { challenger: undefined, target: undefined };
-            let updated = false;
-
-            if (action === 'challengerDeckOne') {
-                await interaction.editReply({
-                    content: `🎉 You chose Deck 1!`,
-                    components: [],
-                });
-                entry.challenger = 1;
-                updated = true;
-            }
-            if (action === 'challengerDeckTwo') {
-                await interaction.editReply({
-                    content: `🎉 You chose Deck 2!`,
-                    components: [],
-                });
-                entry.challenger = 2;
-                updated = true;
-            }
-            if (action === 'targetDeckOne') {
-                await interaction.editReply({
-                    content: `🎉 You chose Deck 1!`,
-                    components: [],
-                });
-                entry.target = 1;
-                updated = true;
-            }
-            if (action === 'targetDeckTwo') {
-                await interaction.editReply({
-                    content: `🎉 You chose Deck 2!`,
-                    components: [],
-                });
-                entry.target = 2;
-                updated = true;
-            }
-
-            if (updated) {
-                deckChoices.set(challengeKey, entry);
-            }
-
-            // Only print to log if both have chosen
-            if (entry.challenger && entry.target) {
-                activeChallenges.delete(challengeKey);
-                deckChoices.delete(challengeKey);
-                const logChannel = getLogChannel(client);
-                if (logChannel?.isTextBased()) {
-                    const embed = new EmbedBuilder()
-                        .setTitle('Deck Choices Revealed!')
-                        .setDescription(
-                            `<@${challengerUser.id}> chose Deck ${entry.challenger} \n<@${targetUser.id}> chose Deck ${entry.target}`
-                        )
-                        .setColor(0x00ff00)
-                        .setTimestamp();
-                    await logChannel.send({ embeds: [embed] });
+                if (!challenge) {
+                    console.log('Challenge not found:', challengeKey);
+                    return;
                 }
+
+                const { challengerId: realChallengerId, targetId: realTargetId } = challenge;
+
+                const deckMap = {
+                    challengerDeckOne: 1,
+                    challengerDeckTwo: 2,
+                    targetDeckOne: 1,
+                    targetDeckTwo: 2,
+                } as const;
+
+                const value = deckMap[action as keyof typeof deckMap];
+
+                if (!value) {
+                    console.log('INVALID ACTION:', action);
+                    return;
+                }
+
+                let entry = deckChoices.get(challengeKey) || {
+                    challenger: undefined as number | undefined,
+                    target: undefined as number | undefined,
+                };
+
+                console.log('BEFORE:', entry);
+
+                if (interaction.user.id === realChallengerId) {
+                    entry.challenger = value;
+                } else if (interaction.user.id === realTargetId) {
+                    entry.target = value;
+                } else {
+                    console.log('Unknown clicker:', interaction.user.id);
+                    return;
+                }
+
+                console.log('AFTER:', entry);
+
+                deckChoices.set(challengeKey, entry);
+
+                await interaction.followUp({
+                    content: `You chose Deck ${value}`,
+                    ephemeral: true,
+                });
+
+                if (entry.challenger && entry.target) {
+                    activeChallenges.delete(challengeKey);
+                    deckChoices.delete(challengeKey);
+
+                    const logChannel = getLogChannel(client);
+
+                    if (logChannel?.isTextBased()) {
+                        await logChannel.send({
+                            content:
+                                `🎴 Deck Choices Revealed 🎴\n` +
+                                `<@${realChallengerId}> chose Deck ${entry.challenger}\n` +
+                                `<@${realTargetId}> chose Deck ${entry.target}`,
+                        });
+                    }
+                }
+
+            } catch (err) {
+                console.error('Interaction error:', err);
             }
-    
-            // Notify the challenger via DM
-            // await challengerUser.send(`🎉 <@${interaction.user.id}> accepted your challenge!`);
-
-            // const embed = new EmbedBuilder()
-            //     .setTitle('✅ Challenge Accepted!')
-            //     .setDescription(`<@${interaction.user.id}> 🆚 <@${challengerId}>`)
-            //     .setColor(0x00ff00)
-            //     .setTimestamp();
-
-            // if (logChannel?.isTextBased())
-            //     await logChannel.send({ embeds: [embed] });
-    
-            // if (action === 'reject') {
-            //     // Notify target via DM
-            //     await interaction.editReply({
-            //         content: `❌ You rejected the challenge from <@${challengerId}>.`,
-            //         components: [],
-            //     });
-        
-            //     // Notify the challenger via DM
-            //     await challengerUser.send(`❌ <@${interaction.user.id}> rejected your challenge.`);
-            // }
         }
-    }
-    catch (err) {
-        console.error('Interaction error:', err);
+    } catch (err) {
+        console.error('Global interaction error:', err);
     }
 });
 
