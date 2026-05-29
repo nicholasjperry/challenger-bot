@@ -11,9 +11,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // Stores per-player deck choices
 export const deckChoices = new Map<
     string,
@@ -75,6 +72,7 @@ export const data = new SlashCommandBuilder()
             .setDescription('Planeswalker to challenge')
             .setRequired(true)
     );
+
 // Slash command execution
 export async function execute(interaction: ChatInputCommandInteraction, client: Client) {
     await interaction.deferReply({ ephemeral: true });
@@ -130,6 +128,8 @@ export async function execute(interaction: ChatInputCommandInteraction, client: 
             targetId: targetUser.id,
         });
 
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
         const playerDecks = JSON.parse(fs.readFileSync(path.join(__dirname, '../../data/playerDecks.json'), 'utf-8')).playerDecks;
         const challengerDecks = playerDecks.find((p: any) => p.playerId === challengerUser.id);
         const targetDecks = playerDecks.find((p: any) => p.playerId === targetUser.id);

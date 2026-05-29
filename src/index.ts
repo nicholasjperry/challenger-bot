@@ -1,3 +1,13 @@
+// import fs from 'node:fs';
+// import path from 'node:path';
+// import { fileURLToPath } from 'node:url';
+import {
+    activeChallenges,
+    getLogChannel,
+    deckChoices,
+} from './commands/challenge.js';
+
+import { SapphireClient} from '@sapphire/framework';
 import { 
     Client,
     Collection,
@@ -7,48 +17,40 @@ import {
 } from 'discord.js';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import {
-    activeChallenges,
-    getLogChannel,
-    deckChoices,
-} from './commands/challenge.js';
 
 dotenv.config();
 
-const client = new Client({
+const client = new SapphireClient({
     intents: [
         GatewayIntentBits.Guilds,
+        // GatewayIntentBits.GuildMessages,
+        // GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.GuildMembers,
     ],
     partials: [
         Partials.Channel,
     ],
-}) as Client & { commands: Collection<string, any>};
+});
 
-client.commands = new Collection();
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const commandsPath = path.join(__dirname, 'commands');
+// const isDev = process.env.NODE_ENV !== 'production';
+// const commandFiles = fs.readdirSync(commandsPath)
+//     .filter(file => isDev ? file.endsWith('.ts') : file.endsWith('.js'));
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const commandsPath = path.join(__dirname, 'commands');
-const isDev = process.env.NODE_ENV !== 'production';
-const commandFiles = fs.readdirSync(commandsPath)
-    .filter(file => isDev ? file.endsWith('.ts') : file.endsWith('.js'));
-
-for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = await import(`file://${filePath}`);
-    if ('data' in command && 'execute' in command) {
-        client.commands.set(command.data.name, command);
-        console.log(`Loaded command: ${command.data.name}`);
-    }
-    else {
-        console.warn(`[WARNING] ${file} is missing "data" or "execute"`);
-    }
-}
+// for (const file of commandFiles) {
+//     const filePath = path.join(commandsPath, file);
+//     const command = await import(`file://${filePath}`);
+//     if ('data' in command && 'execute' in command) {
+//         client.commands.set(command.data.name, command);
+//         console.log(`Loaded command: ${command.data.name}`);
+//     }
+//     else {
+//         console.warn(`[WARNING] ${file} is missing "data" or "execute"`);
+//     }
+// }
 
 client.on(Events.InteractionCreate, async (interaction) => {
     try {
@@ -169,10 +171,6 @@ cron.schedule('0 0 * * *', async () => {
     const messages = await logChannel?.messages.fetch({ limit: 100});
 
     messages.forEach(m => m.delete());
-});
-
-client.once(Events.ClientReady, () => {
-    console.log(`Logged in as ${client.user?.tag}`);
 });
 
 client.login(process.env.TOKEN);
