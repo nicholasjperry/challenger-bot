@@ -2,14 +2,12 @@
   "name": "challenger-bot",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "scripts": {
     "build": "rimraf ./dist && tsc",
-    "commands": "node --loader ts-node/esm src/deploy-commands.ts",
-    "debug": "nodemon --inspect --loader ts-node/esm src/index.ts",
-    "dev": "nodemon --loader ts-node/esm src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "debug": "npm run build"
   },
   "keywords": [],
   "author": "",
@@ -26,7 +24,7 @@
     "@types/node": "^24.0.3",
     "eslint": "^9.29.0",
     "nodemon": "^3.1.10",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^5.8.3"
   }
 }

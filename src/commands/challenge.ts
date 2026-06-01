@@ -1,217 +1,116 @@
+import { Command } from '@sapphire/framework';
 import {
-    SlashCommandBuilder,
     ChatInputCommandInteraction,
     ButtonBuilder,
     ButtonStyle,
     ActionRowBuilder,
-    Client,
-    TextChannel,
 } from 'discord.js';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { getPlayerDecks } from '../lib/playerDecks.js';
 
 // Stores per-player deck choices
-export const deckChoices = new Map<
-    string,
-    {
-        challenger?: string;
-        target?: string;
-    }
->();
+export const deckChoices = new Map<string, { challenger?: string; target?: string; }>();
 
 // Stores active challenge metadata (authoritative source of truth)
-export const activeChallenges = new Map<
-    string,
-    {
-        challengerId: string;
-        targetId: string;
-    }
->();
+export const activeChallenges = new Map<string, { challengerId: string; targetId: string; }>();
 
 // Creates a stable, order-independent key for both users
 export function getChallengeKey(a: string, b: string) {
     return [a, b].sort().join('-');
 }
 
-// Gets log channel
-export function getLogChannel(client: Client) {
-    const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-    return guild?.channels.cache.find(
-        c => c.name === 'challenge-log'
-    );
-}
-
-//Checks daily message limit in log channel
-export async function checkMaxMessages(interaction: any, client: Client) {
-    const logChannel = getLogChannel(client);
-
-    if (!logChannel?.isTextBased()) return;
-
-    const messages = await logChannel.messages.fetch({ limit: 100 });
-
-    if (messages.size >= 10) {
-        await interaction.followUp({
-            content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
-            ephemeral: true,
+export class ChallengeCommand extends Command {
+    public constructor(context: Command.LoaderContext, options: Command.Options) {
+        super(context, {
+            ...options,
+            name: 'challenge',
+            description: 'Challenge another Planeswalker',
         });
-
-        return true;
     }
 
-    return false;
-}
-
-// Slash command definition
-export const data = new SlashCommandBuilder()
-    .setName('challenge')
-    .setDescription('Challenge another Planeswalker')
-    .addUserOption(option =>
-        option
-            .setName('name')
-            .setDescription('Planeswalker to challenge')
-            .setRequired(true)
-    );
-
-// Slash command execution
-export async function execute(interaction: ChatInputCommandInteraction, client: Client) {
-    await interaction.deferReply({ ephemeral: true });
-
-    try {
-        const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-
-        const logChannel = guild?.channels.cache.find(
-            c => c.isTextBased() && c.name === 'challenge-log'
-        ) as TextChannel | undefined;
-
-        if (!logChannel) {
-            await interaction.editReply({
-                content: '⚠️ Could not find the challenge-log channel.',
-            });
-            return;
-        }
-
-        const messages = await logChannel.messages.fetch({ limit: 100 });
-
-        if (messages.size >= 10) {
-            await interaction.editReply({
-                content: '⚠️ Maximum daily challenges reached. Please try again tomorrow.',
-            });
-            return;
-        }
-
-        const targetUser = interaction.options.getUser('name', true);
-        const challengerUser = interaction.user;
-
-        if (targetUser.id === challengerUser.id) {
-            await interaction.editReply({
-                content: '⚠️ You cannot challenge yourself!',
-            });
-            return;
-        }
-
-        const challengeKey = getChallengeKey(
-            challengerUser.id,
-            targetUser.id
+    public override registerApplicationCommands(registry: Command.Registry) {
+        registry.registerChatInputCommand(builder => 
+            builder
+                .setName(this.name)
+                .setDescription(this.description)
+                .addUserOption(option => 
+                    option
+                        .setName('name')
+                        .setDescription('Planeswalker to challenge')
+                        .setRequired(true)
+                )
         );
+    }
+
+    public override async chatInputRun(interaction: ChatInputCommandInteraction) {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const challenger = interaction.user;
+        const target = interaction.options.getUser('name', true);
+
+        if (challenger.id === target.id) {
+            return interaction.editReply({ content: '⚠️ You cannot challenge yourself!' });
+        }
+
+        const challengeKey = getChallengeKey(challenger.id, target.id);
 
         if (activeChallenges.has(challengeKey)) {
-            await interaction.editReply({
-                content:
-                    '⚠️ There is already an active challenge between you two!',
+            return interaction.editReply({
+                content: '⚠️ There is already an active challenge between you two!'
             });
-            return;
         }
 
+        // Update activeChallenges Map
         activeChallenges.set(challengeKey, {
-            challengerId: challengerUser.id,
-            targetId: targetUser.id,
+            challengerId: challenger.id,
+            targetId: target.id,
         });
+        
+        // Lookup decks
+        const challengerDecks = getPlayerDecks(challenger.id);
+        const targetDecks = getPlayerDecks(target.id);
 
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename);
-        const playerDecks = JSON.parse(fs.readFileSync(path.join(__dirname, '../../data/playerDecks.json'), 'utf-8')).playerDecks;
-        const challengerDecks = playerDecks.find((p: any) => p.playerId === challengerUser.id);
-        const targetDecks = playerDecks.find((p: any) => p.playerId === targetUser.id);
-
-        // Buttons (consistent IDs — NO flipping)
-        const challengerUserDeckOneButton = new ButtonBuilder()
-            .setCustomId(
-                `challengerDeckOne-${challengerUser.id}-${targetUser.id}`
-            )
-            .setLabel(challengerDecks?.deckOne || 'Deck 1')
-            .setStyle(ButtonStyle.Primary);
-
-        const challengerUserDeckTwoButton = new ButtonBuilder()
-            .setCustomId(
-                `challengerDeckTwo-${challengerUser.id}-${targetUser.id}`
-            )
-            .setLabel(challengerDecks?.deckTwo || 'Deck 2')
-            .setStyle(ButtonStyle.Primary);
-
-        const targetUserDeckOneButton = new ButtonBuilder()
-            .setCustomId(
-                `targetDeckOne-${challengerUser.id}-${targetUser.id}`
-            )
-            .setLabel(targetDecks?.deckOne || 'Deck 1')
-            .setStyle(ButtonStyle.Primary);
-
-        const targetUserDeckTwoButton = new ButtonBuilder()
-            .setCustomId(
-                `targetDeckTwo-${challengerUser.id}-${targetUser.id}`
-            )
-            .setLabel(targetDecks?.deckTwo || 'Deck 2')
-            .setStyle(ButtonStyle.Primary);
-
+        // Buttons
         const challengerRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            challengerUserDeckOneButton,
-            challengerUserDeckTwoButton
+            new ButtonBuilder()
+                .setCustomId(`challengerDeckOne-${challengeKey}`)
+                .setLabel(challengerDecks?.deckOne ?? 'Deck 1')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId(`challengerDeckTwo-${challengeKey}`)
+                .setLabel(challengerDecks?.deckTwo ?? 'Deck 2')
+                .setStyle(ButtonStyle.Primary)
         );
-
         const targetRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            targetUserDeckOneButton,
-            targetUserDeckTwoButton
+            new ButtonBuilder()
+                .setCustomId(`targetDeckOne-${challengeKey}`)
+                .setLabel(targetDecks?.deckOne ?? 'Deck 1')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId(`targetDeckTwo-${challengeKey}`)
+                .setLabel(targetDecks?.deckTwo ?? 'Deck 2')
+                .setStyle(ButtonStyle.Primary)
         );
 
         try {
-            await targetUser.send({
-                content: `You have been challenged by <@${challengerUser.id}>! Choose Deck 1 or Deck 2.`,
-                components: [targetRow],
-            });
-
-            await challengerUser.send({
-                content: `You have challenged <@${targetUser.id}>! Choose Deck 1 or Deck 2.`,
+            await challenger.send({
+                content: `Choose your deck vs. <@${target.id}>`,
                 components: [challengerRow],
             });
-        } catch (err) {
-            console.error('Failed to DM user(s):', err);
 
-            await interaction.editReply({
-                content:
-                    '⚠️ Could not DM one or both users. Challenge cancelled.',
+            await target.send({
+                content: `Choose your deck vs <@${challenger.id}>`,
+                components: [targetRow],
             });
-
+        } catch {
             activeChallenges.delete(challengeKey);
-            return;
+
+            return interaction.editReply({
+                content: 'Failed to DM users.',
+            });
         }
 
         await interaction.editReply({
-            content: `Challenge sent to <@${targetUser.id}> via DM!`,
+            content: `Challenge sent to <@${target.id}>`,
         });
-    } catch (err) {
-        console.error('Error executing challenge command:', err);
-
-        if (interaction.replied || interaction.deferred) {
-            await interaction.editReply({
-                content:
-                    '⚠️ An unexpected error occurred while sending the challenge.',
-            });
-        } else {
-            await interaction.reply({
-                content:
-                    '⚠️ An unexpected error occurred while sending the challenge.',
-                ephemeral: true,
-            });
-        }
     }
 }

@@ -4,7 +4,10 @@ import {
     Partials,
 } from 'discord.js';
 import dotenv from 'dotenv';
-import cron from 'node-cron';
+// import cron from 'node-cron';
+import { join } from 'path';
+
+const ROOT = join(process.cwd(), 'src');
 
 dotenv.config();
 
@@ -17,17 +20,18 @@ const client = new SapphireClient({
     partials: [
         Partials.Channel,
     ],
+    baseUserDirectory: ROOT,
 });
 
-cron.schedule('0 0 * * *', async () => {
-    const guild = client.guilds.cache.get(process.env.GUILD_ID!);
-    const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
+// cron.schedule('0 0 * * *', async () => {
+//     const guild = client.guilds.cache.get(process.env.GUILD_ID!);
+//     const logChannel = guild?.channels.cache.find(c => c.name === 'challenge-log');
 
-    if (!logChannel?.isTextBased()) return;
+//     if (!logChannel?.isTextBased()) return;
 
-    const messages = await logChannel?.messages.fetch({ limit: 100});
+//     const messages = await logChannel?.messages.fetch({ limit: 100});
 
-    messages.forEach(m => m.delete());
-});
+//     messages.forEach(m => m.delete());
+// });
 
 client.login(process.env.TOKEN);
