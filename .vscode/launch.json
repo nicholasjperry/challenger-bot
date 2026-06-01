@@ -4,13 +4,40 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Debug Bot (src via tsx)",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect-brk", "--import", "tsx"],
+      "program": "${workspaceFolder}/src/index.ts",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "windows": {
+        "runtimeExecutable": "node"
+      },
+      "linux": {
+        "runtimeExecutable": "/home/nick/.nvm/versions/node/v20.14.0/bin/node"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Debug Bot (dist)",
-      "runtimeExecutable": "/home/nick/.nvm/versions/node/v20.14.0/bin/node",
+      "runtimeExecutable": "node",
+      "preLaunchTask": "npm: build",
       "program": "${workspaceFolder}/dist/index.js",
       "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
       "console": "integratedTerminal",
+      "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": ["<node_internals>/**"],
+      "windows": {
+        "runtimeExecutable": "node"
+      },
+      "linux": {
+        "runtimeExecutable": "/home/nick/.nvm/versions/node/v20.14.0/bin/node"
+      }
     }
   ]
 }

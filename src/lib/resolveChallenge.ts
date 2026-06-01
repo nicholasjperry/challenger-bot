@@ -13,7 +13,8 @@ export async function resolveChallenge(key: string) {
     activeChallenges.delete(key);
     deckChoices.delete(key);
 
-    const guild = globalThis?.client.guilds.cache.get(process.env.GUILD_ID!);
+    const client = (globalThis as { client?: { guilds: { cache: Map<string, any> } } }).client;
+    const guild = client?.guilds.cache.get(process.env.GUILD_ID!);
     if(!guild) return;
 
     // const logChannel = guild?.channels.cache.get(process.env.LOG_CHANNEL_ID!);

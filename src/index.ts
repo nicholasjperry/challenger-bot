@@ -5,9 +5,10 @@ import {
 } from 'discord.js';
 import dotenv from 'dotenv';
 // import cron from 'node-cron';
-import { join } from 'path';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const ROOT = join(process.cwd(), 'src');
+const ROOT = dirname(fileURLToPath(import.meta.url));
 
 dotenv.config();
 
@@ -22,6 +23,8 @@ const client = new SapphireClient({
     ],
     baseUserDirectory: ROOT,
 });
+
+(globalThis as { client?: SapphireClient }).client = client;
 
 // cron.schedule('0 0 * * *', async () => {
 //     const guild = client.guilds.cache.get(process.env.GUILD_ID!);

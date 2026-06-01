@@ -6,17 +6,7 @@ import {
     ActionRowBuilder,
 } from 'discord.js';
 import { getPlayerDecks } from '../lib/playerDecks.js';
-
-// Stores per-player deck choices
-export const deckChoices = new Map<string, { challenger?: string; target?: string; }>();
-
-// Stores active challenge metadata (authoritative source of truth)
-export const activeChallenges = new Map<string, { challengerId: string; targetId: string; }>();
-
-// Creates a stable, order-independent key for both users
-export function getChallengeKey(a: string, b: string) {
-    return [a, b].sort().join('-');
-}
+import { activeChallenges, getChallengeKey } from '../lib/challengeStore.js';
 
 export class ChallengeCommand extends Command {
     public constructor(context: Command.LoaderContext, options: Command.Options) {

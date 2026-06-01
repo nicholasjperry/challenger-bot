@@ -35,18 +35,29 @@ export class DeckChoiceHandler extends InteractionHandler {
     }
 
     parse(interaction: ButtonInteraction) {
-        const action = interaction.customId.split('-')[0] as Action;
+        const separatorIndex = interaction.customId.indexOf('-');
+        if (separatorIndex === -1) return this.none();
+
+        const action = interaction.customId.slice(0, separatorIndex) as Action;
 
         if (!(action in deckFieldMap)) return this.none();
         return this.some();
     }
 
     async run(interaction: ButtonInteraction) {
-        
-        const [action, challengeKey] = interaction.customId.split('-') as [Action, string];
-        
+        const separatorIndex = interaction.customId.indexOf('-');
+        if (separatorIndex === -1) return;
+
+        const action = interaction.customId.slice(0, separatorIndex) as Action;
+        const challengeKey = interaction.customId.slice(separatorIndex + 1);
+
         const challenge = activeChallenges.get(challengeKey);
-        if (!challenge) return;
+        if (!challenge) {
+            return interaction.reply({
+                content: 'This challenge is no longer active.',
+                ephemeral: true,
+            });
+        }
         
         const { challengerId, targetId } = challenge;
         
@@ -58,7 +69,12 @@ export class DeckChoiceHandler extends InteractionHandler {
         }
         
         const decks = getPlayerDecks(interaction.user.id);
-        if (!decks) return;
+        if (!decks) {
+            return interaction.reply({
+                content: 'No deck data found for your user.',
+                ephemeral: true,
+            });
+        }
         
         const entry = deckChoices.get(challengeKey) ?? {
             challenger: undefined,
