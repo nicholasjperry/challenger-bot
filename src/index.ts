@@ -5,9 +5,9 @@ import {
     Partials,
 } from 'discord.js';
 import dotenv from 'dotenv';
-// import cron from 'node-cron';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { hydrateChallengeReminders } from './lib/hydrateChallengeReminders.js';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 
@@ -15,7 +15,7 @@ dotenv.config();
 
 export const prisma = new PrismaClient();
 
-const client = new SapphireClient({
+export const client = new SapphireClient({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.DirectMessages,

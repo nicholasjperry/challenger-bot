@@ -30,7 +30,7 @@ export class DeckChoiceHandler extends InteractionHandler {
     constructor(context: InteractionHandler.LoaderContext, options: InteractionHandler.Options) {
         super(context, {
             ...options,
-            interactionHandlerType: InteractionHandlerTypes.Button
+            interactionHandlerType: InteractionHandlerTypes.Button,
         });
     }
 

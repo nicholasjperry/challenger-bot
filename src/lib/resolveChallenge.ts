@@ -1,4 +1,6 @@
+import { prisma } from '../index.js';
 import { deckChoices, activeChallenges } from './challengeStore.js';
+import { scheduleChallengeReminder } from './scheduleChallengeReminder.js';
 
 export async function resolveChallenge(key: string) {
     const entry = deckChoices.get(key);
@@ -23,10 +25,21 @@ export async function resolveChallenge(key: string) {
 
     if (!logChannel || !logChannel.isTextBased()) return;
 
+    // Send message to #challenge-log
     await logChannel.send({
         content:
         `🎴 Deck Choices Revealed 🎴\n` +
         `<@${challengerId}> chose ${entry.challenger}\n` +
         `<@${targetId}> chose ${entry.target}`,
     });
+
+    // Create db record
+    const { id, createdAt } = await prisma.challenge.create({
+        data: {
+            challengerId: challengerId,
+            targetId: targetId,
+        }
+    });
+
+    scheduleChallengeReminder(id, createdAt);
 }

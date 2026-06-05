@@ -1,5 +1,6 @@
 import { Listener } from '@sapphire/framework';
 import { Events } from 'discord.js';
+import { hydrateChallengeReminders } from '../lib/hydrateChallengeReminders.js';
 
 export class ReadyListener extends Listener {
   constructor(context: Listener.LoaderContext, options: Listener.Options) {
@@ -12,5 +13,6 @@ export class ReadyListener extends Listener {
 
   run() {
     console.log('Bot is ready!');
+    hydrateChallengeReminders();
   }
 }
