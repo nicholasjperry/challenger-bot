@@ -1,0 +1,20 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Challenge {
+  id            String  @id @default(cuid())
+  challengerId  String
+  targetId      String
+  createdAt     DateTime  @default(now())
+  reminderSent  Boolean   @default(false)
+}

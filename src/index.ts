@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client/extension';
 import { SapphireClient} from '@sapphire/framework';
 import { 
     GatewayIntentBits,
@@ -11,6 +12,8 @@ import { fileURLToPath } from 'url';
 const ROOT = dirname(fileURLToPath(import.meta.url));
 
 dotenv.config();
+
+export const prisma = new PrismaClient();
 
 const client = new SapphireClient({
     intents: [

@@ -7,6 +7,7 @@ import {
 } from 'discord.js';
 import { getPlayerDecks } from '../lib/playerDecks.js';
 import { activeChallenges, getChallengeKey } from '../lib/challengeStore.js';
+import { prisma } from '../index.js';
 
 export class ChallengeCommand extends Command {
     public constructor(context: Command.LoaderContext, options: Command.Options) {
@@ -53,6 +54,14 @@ export class ChallengeCommand extends Command {
         activeChallenges.set(challengeKey, {
             challengerId: challenger.id,
             targetId: target.id,
+        });
+
+        // Store in db
+        await prisma.challenge.create({
+            data: {
+                challengerId: challenger.id,
+                targetId: target.id,
+            }
         });
         
         // Lookup decks
