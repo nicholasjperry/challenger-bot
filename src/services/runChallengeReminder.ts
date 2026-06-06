@@ -7,6 +7,7 @@ import {
     client,
     prisma,
 } from "../index.js";
+import { RESPONSES } from "../lib/responses.js";
 
 export async function runChallengeReminder(challengeId: string) {
     const challenge = await prisma.challenge.findUnique({
@@ -17,22 +18,32 @@ export async function runChallengeReminder(challengeId: string) {
 
     if (!challenge || challenge.reminderSent) return;
 
+    // Update reminderSent bool
+    await prisma.challenge.update({
+        where: {
+            id: challengeId,
+        },
+        data: {
+            reminderSent: true,
+        },
+    });
+
     const challenger = await client.users.fetch(challenge.challengerId);
     const target = await client.users.fetch(challenge.targetId);
 
     const reminderMessage = `It's been 1 hour since your challenge.  Did you submit a log?`;
     const reminderRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
-            .setCustomId(`reminder-yes-${challenge.id}`)
+            .setCustomId(`challenge:${challenge.id}:${RESPONSES.YES}`)
             .setLabel('Yes')
             .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
-            .setCustomId(`reminder-no-${challenge.id}`)
+            .setCustomId(`challenge:${challenge.id}:${RESPONSES.NO}`)
             .setLabel('No')
             .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
-            .setCustomId(`reminder-cannot-${challenge.id}`)
-            .setLabel(`I can't`)
+            .setCustomId(`challenge:${challenge.id}:${RESPONSES.CANT}`)
+            .setLabel(`Can't`)
             .setStyle(ButtonStyle.Secondary)
     );
 

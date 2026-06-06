@@ -1,6 +1,6 @@
 import { prisma } from '../index.js';
 import { deckChoices, activeChallenges } from './challengeStore.js';
-import { scheduleChallengeReminder } from './scheduleChallengeReminder.js';
+import { scheduleChallengeReminder } from '../services/scheduleChallengeReminder.js';
 
 export async function resolveChallenge(key: string) {
     const entry = deckChoices.get(key);
@@ -33,13 +33,18 @@ export async function resolveChallenge(key: string) {
         `<@${targetId}> chose ${entry.target}`,
     });
 
-    // Create db record
-    const { id, createdAt } = await prisma.challenge.create({
+    // Create reminder timestamp - SOURCE OF TRUTH
+    const remindAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    // Store in db
+    const newChallenge = await prisma.challenge.create({
         data: {
             challengerId: challengerId,
             targetId: targetId,
+            remindAt: remindAt,
         }
     });
 
-    scheduleChallengeReminder(id, createdAt);
+    // Schedule runtime trigger
+    scheduleChallengeReminder(newChallenge.id, remindAt);
 }

@@ -12,9 +12,13 @@ datasource db {
 }
 
 model Challenge {
-  id            String  @id @default(cuid())
-  challengerId  String
-  targetId      String
-  createdAt     DateTime  @default(now())
-  reminderSent  Boolean   @default(false)
+  id                  String    @id @default(cuid())
+  challengerId        String
+  targetId            String
+  createdAt           DateTime  @default(now())
+  remindAt            DateTime?
+  reminderSent        Boolean   @default(false)
+  challengerResponse  String?
+  targetResponse      String?
+  completed           Boolean   @default(false)
 }
