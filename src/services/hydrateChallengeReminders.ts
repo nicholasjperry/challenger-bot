@@ -1,5 +1,4 @@
 import { prisma } from "../index.js";
-import { runChallengeReminder } from "./runChallengeReminder.js";
 import { scheduleChallengeReminder } from "./scheduleChallengeReminder.js";
 
 export async function hydrateChallengeReminders() {

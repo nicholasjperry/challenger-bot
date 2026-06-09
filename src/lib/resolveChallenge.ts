@@ -34,7 +34,9 @@ export async function resolveChallenge(key: string) {
     });
 
     // Create reminder timestamp - SOURCE OF TRUTH
-    const remindAt = new Date(Date.now() + 60 * 60 * 1000);
+    const ONE_HOUR = 60 * 60 * 1000;
+    const THIRTY_SECONDS = 30 * 1000; // Testing
+    const remindAt = new Date(Date.now() + THIRTY_SECONDS);
 
     // Store in db
     const newChallenge = await prisma.challenge.create({
