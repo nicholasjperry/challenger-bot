@@ -9,6 +9,6 @@ export async function hydrateChallengeReminders() {
     });
 
     for (const challenge of challenges) {
-        scheduleChallengeReminder(challenge.id, challenge.remindAt);
+        scheduleChallengeReminder(challenge.id, challenge.remindAt as Date);
     }
 }

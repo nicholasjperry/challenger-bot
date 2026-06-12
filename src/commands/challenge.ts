@@ -98,12 +98,12 @@ export class ChallengeCommand extends Command {
             activeChallenges.delete(challengeKey);
 
             return interaction.editReply({
-                content: 'Failed to DM users.',
+                content: '⚠️ Failed to DM users!',
             });
         }
 
         await interaction.editReply({
-            content: `Challenge sent to <@${target.id}>`,
+            content: `📣 Challenge sent to <@${target.id}> via DM!`,
         });
     }
 }

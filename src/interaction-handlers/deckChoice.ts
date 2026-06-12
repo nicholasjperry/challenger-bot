@@ -54,7 +54,7 @@ export class DeckChoiceHandler extends InteractionHandler {
         const challenge = activeChallenges.get(challengeKey);
         if (!challenge) {
             return interaction.reply({
-                content: 'This challenge is no longer active.',
+                content: '⚠️ This challenge is no longer active!',
                 ephemeral: true,
             });
         }
@@ -63,7 +63,7 @@ export class DeckChoiceHandler extends InteractionHandler {
         
         if (![challengerId, targetId].includes(interaction.user.id)) {
             return interaction.reply({
-                content: 'This is not your challenge.',
+                content: '⚠️ This is not your challenge!',
                 ephemeral: true,
             });
         }
@@ -71,7 +71,7 @@ export class DeckChoiceHandler extends InteractionHandler {
         const decks = getPlayerDecks(interaction.user.id);
         if (!decks) {
             return interaction.reply({
-                content: 'No deck data found for your user.',
+                content: '⚠️ No deck data found for your user!',
                 ephemeral: true,
             });
         }
@@ -91,7 +91,7 @@ export class DeckChoiceHandler extends InteractionHandler {
         deckChoices.set(challengeKey, entry);
 
         await interaction.update({
-            content: 'Deck selected.',
+            content: `🫵 ${decks[field]} - I choose you!`,
             components: [],
         });
 

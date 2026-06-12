@@ -1,5 +1,5 @@
 export const RESPONSES = {
-    YES: "YES",
-    NO: "NO",
-    CANT: "CANT"
+    YES: "👍 YES ",
+    NO: "👎 NO",
+    CANT: "🤷 CANT"
 };

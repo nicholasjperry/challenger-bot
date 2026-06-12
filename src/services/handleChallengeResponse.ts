@@ -55,7 +55,7 @@ export async function handleChallengeResponse(interaction: ButtonInteraction) {
         ephemeral: true,
     });
 
-    if (updated.challengeResponse && updated.targetResponse) {
-        await handleBothResponded(updated);
+    if (updated.challengerResponse && updated.targetResponse) {
+        await handleBothResponded(updated.id);
     }
 }

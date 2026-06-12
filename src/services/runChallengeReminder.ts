@@ -31,7 +31,7 @@ export async function runChallengeReminder(challengeId: string) {
     const challenger = await client.users.fetch(challenge.challengerId);
     const target = await client.users.fetch(challenge.targetId);
 
-    const reminderMessage = `It's been 1 hour since your challenge.  Did you submit a log?`;
+    const reminderMessage = `It's been 1 hour since your challenge.  Did you submit a log to the \`#mtga-parser-dump\` channel?`;
     const reminderRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
             .setCustomId(`challenge:${challenge.id}:${RESPONSES.YES}`)
